@@ -1,0 +1,67 @@
+#!/usr/bin/python
+
+import argparse
+from decimal import Decimal
+
+from autosend.autosend import Autosender
+
+CONFIGURABLES = [
+        'bitcoind.user',
+        'bitcoind.password',
+        'bitcoind.host',
+        'bitcoind.port',
+]
+
+sender = Autosender()
+
+parser = argparse.ArgumentParser(
+        description="Automatic bitcoin transaction utility") 
+subparsers = parser.add_subparsers()
+
+parser_create = subparsers.add_parser('create',
+        help="Define a new rule")
+create_subparsers = parser_create.add_subparsers()
+parser_create_split = create_subparsers.add_parser('split',
+        help="Split a balance into a set proportion")
+parser_create_split.add_argument('--minimum', type=Decimal, default=0.0,
+        help="Minimum balance to execute")
+parser_create_split.add_argument('--fee', type=Decimal, default=0.0001,
+        help="Transaction fee to include")
+parser_create_split.add_argument('ADDRESS',
+        help="Address to send from")
+parser_create_split.add_argument('OUTPUT_PROPORTION', metavar="OUTPUT:PROPORTION", nargs='+',
+        help="Address to send to and proportion (decimal) to send")
+parser_create_split.set_defaults(func=sender.create_split)
+
+parser_delete = subparsers.add_parser('delete',
+        help="Delete an existing rule")
+parser_delete.add_argument('ADDRESS',
+        help="Address rule spends from")
+parser_delete.set_defaults(func=sender.delete)
+
+parser_execute = subparsers.add_parser('execute',
+        help="Execute all transactions from any matched rules")
+parser_execute.add_argument('ADDRESS', nargs='*',
+        help="Address rule spends from")
+parser_execute.set_defaults(func=sender.execute)
+
+parser_set = subparsers.add_parser('set',
+        help="Set a configuration parameter")
+parser_set.add_argument('PARAMETER', choices=CONFIGURABLES,
+        help="Parameter to set")
+parser_set.add_argument('VALUE',
+        help="Value to set parameter to")
+parser_set.set_defaults(func=sender.set_param)
+
+parser_get = subparsers.add_parser('get',
+        help="Get a configuration parameter")
+parser_get.add_argument('PARAMETER', choices=CONFIGURABLES,
+        help="Parameter to get")
+parser_get.set_defaults(func=sender.get_param)
+
+parser_get = subparsers.add_parser('show',
+        help="Show defined rules")
+parser_get.set_defaults(func=sender.show_rules)
+
+parsed = parser.parse_args()
+parsed.func(parsed)
