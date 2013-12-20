@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
 import os
-import simplejson as json
+try: import simplejson as json
+except ImportError: import json
 from decimal import Decimal
 import copy
 import bitcoinrpc.authproxy
